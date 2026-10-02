@@ -181,6 +181,7 @@ a base do `DESENVOLVIMENTO.md` final.
 
 | Date       | Decision                                                        | Why |
 |------------|------------------------------------------------------------------|-----|
+| 2026-10-02 | `package-lock.json` regenerado do zero e recommitado             | O lockfile em `main` (gerado durante uma instalação com dois agentes `developer` rodando em paralelo no mesmo diretório) fazia `npm ci`/`npm install` falharem de forma reprodutível em materializar binários nativos opcionais (`esbuild`, `@rolldown/binding-*`) no Windows — bug `npm/cli#4828`. Regenerar o lockfile do zero corrigiu de forma consistente, sem alterar nenhuma versão fixada (`prisma`/`@prisma/client` continuam em `6.12.0`, `npm audit` continua em 0 vulnerabilidades); ver [Notes for README.md](#notes-for-readmemd-ticket-016) |
 | 2026-10-02 | `prisma` e `@prisma/client` fixados em `6.12.0` (versão exata, não `^6.12.0`) | A versão mais recente do `prisma` (8.x RC, resolvida por um `npm install` sem pin) trazia `@prisma/composer-cli` como dependência obrigatória — um recurso de deploy em nuvem que arrasta `alchemy` e `workerd` (runtime do Cloudflare Workers), dezenas de MB e 8 vulnerabilidades altas conhecidas (incluindo um bypass de autorização). A 6.12.0 é a última versão sem essa árvore e sem a vulnerabilidade de stack-exhaustion do `deepmerge-ts` que aparece em `@prisma/config` a partir de versões posteriores — nenhum desses recursos é usado neste projeto, e o pin exato evita que um `npm install` futuro suba de novo para uma versão vulnerável |
 | 2026-10-01 | Stack de testes: Vitest + React Testing Library + supertest     | Vitest reaproveita o mesmo motor (Vite/esbuild) do build do frontend React, evitando manter duas ferramentas de bundling/transpilação distintas para app e testes; React Testing Library testa os componentes pela perspectiva do usuário (o que aparece na tela) em vez de detalhes internos; `supertest` exercita as rotas Express reais, incluindo os middlewares de validação Zod, sem precisar abrir uma porta de rede de fato |
 | 2026-10-01 | Validação com Zod em schema compartilhado (`packages/shared`)   | O desafio exige explicitamente "as mesmas regras de validação" nos dois caminhos de cadastro; colocar as regras em um único pacote importado tanto pelo formulário React quanto pelo endpoint Express garante isso por construção, em vez de depender de manter duas implementações sincronizadas manualmente |
@@ -199,3 +200,24 @@ a base do `DESENVOLVIMENTO.md` final.
   (Project Manager e Developer como agentes, Stakeholder/QA humano) deve ser
   chamado de **"agentic loop"** no `DESENVOLVIMENTO.md` final — é o termo que
   Luiz quer usar para descrever esse processo na entrega.
+
+## Notes for README.md (ticket 016)
+
+- **Bug do npm no Windows com `optionalDependencies` — já corrigido no
+  lockfile commitado, mas documentar como cuidado operacional.** Em
+  2026-10-02, o `package-lock.json` gerado durante uma instalação com dois
+  `developer` rodando em paralelo no mesmo diretório (ver decisão de não
+  rodar agentes em paralelo sem `git worktree`, abaixo) deixava os binários
+  nativos específicos de plataforma (`@esbuild/win32-x64`,
+  `@rolldown/binding-win32-x64-msvc`, usados por `vite`/`vitest`/`tsx`) sem
+  materializar em `node_modules` de forma **reprodutível** com `npm ci` ou
+  `npm install` reaproveitando aquele lockfile — é o bug conhecido
+  [`npm/cli#4828`](https://github.com/npm/cli/issues/4828). A causa raiz era o
+  próprio `package-lock.json`, não o ambiente: regenerá-lo do zero
+  (`npm cache clean --force` + apagar `node_modules` e `package-lock.json` +
+  `npm install`) resolveu de forma consistente (testado duas vezes), e o
+  lockfile regenerado foi commitado em 2026-10-02 (sem mudança de versões
+  fixadas — `prisma`/`@prisma/client` seguem em `6.12.0`, `npm audit` segue
+  em 0 vulnerabilidades). Se o avaliador ainda assim bater num erro
+  `Cannot find native binding`: apague `node_modules` e `package-lock.json` e
+  rode `npm install` novamente.
