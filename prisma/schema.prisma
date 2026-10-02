@@ -1,0 +1,13 @@
+// Placeholder — o modelo real de Candidate (nome, e-mail, telefone, área de
+// interesse, resumo profissional) é definido em um ticket próprio, com base
+// nos requisitos em docs/requirements/. Este arquivo existe para que
+// `prisma generate` e as ferramentas do Prisma funcionem desde já.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
