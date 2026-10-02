@@ -1,0 +1,28 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+-- CreateTable
+CREATE TABLE [dbo].[Candidate] (
+    [id] INT NOT NULL IDENTITY(1,1),
+    [fullName] NVARCHAR(1000) NOT NULL,
+    [email] NVARCHAR(1000) NOT NULL,
+    [phone] NVARCHAR(1000),
+    [areaOfInterest] NVARCHAR(1000),
+    [summary] NVARCHAR(max),
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Candidate_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [Candidate_pkey] PRIMARY KEY CLUSTERED ([id])
+);
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

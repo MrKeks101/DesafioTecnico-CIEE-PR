@@ -1,8 +1,3 @@
-// Placeholder — o modelo real de Candidate (nome, e-mail, telefone, área de
-// interesse, resumo profissional) é definido em um ticket próprio, com base
-// nos requisitos em docs/requirements/. Este arquivo existe para que
-// `prisma generate` e as ferramentas do Prisma funcionem desde já.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,4 +5,19 @@ generator client {
 datasource db {
   provider = "sqlserver"
   url      = env("DATABASE_URL")
+}
+
+// Modelo de candidato — ver docs/requirements/cadastro-de-candidatos.md
+// ("Modelo de dados") e specs.md linha 34 ("Scripts ou migrations para
+// criar a estrutura do banco"). Nomes de campo casam com o schema Zod
+// compartilhado em packages/shared/src/candidate.ts.
+model Candidate {
+  id             Int      @id @default(autoincrement())
+  fullName       String
+  email          String
+  phone          String?
+  areaOfInterest String?
+  // nvarchar(1000) default do provider sqlserver truncaria resumos longos.
+  summary        String?  @db.NVarChar(Max)
+  createdAt      DateTime @default(now())
 }
