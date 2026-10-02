@@ -1,5 +1,6 @@
 import cors from "cors";
 import express, { type ErrorRequestHandler, type Request, type Response, type Router } from "express";
+import { candidatesRouter } from "./candidates.js";
 
 /**
  * Builds an Express application instance.
@@ -22,6 +23,8 @@ export function buildApp(extraRouters: Router[] = []) {
   app.get("/api/health", (_req: Request, res: Response) => {
     res.status(200).json({ status: "ok" });
   });
+
+  app.use(candidatesRouter);
 
   for (const router of extraRouters) {
     app.use(router);
