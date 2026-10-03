@@ -71,10 +71,16 @@ candidatesRouter.get("/api/candidates", async (_req: Request, res: Response) => 
 // "abc") would otherwise reach Prisma as an invalid query argument and
 // surface as a generic 500 via app.ts's error handler, instead of the clear
 // 400 the ticket asks for.
-candidatesRouter.get("/api/candidates/:id", async (req: Request, res: Response) => {
-  const { id } = req.params;
+//
+// Exported so the array case (`req.params.id` typed as `string | string[]`
+// by Express 5) can be unit-tested directly — HTTP path params can't produce
+// an array, so supertest alone can't reach that branch.
+export async function getCandidateById(req: Request, res: Response): Promise<void> {
+  // Typed as `unknown` on purpose: Express 5 may hand back `string | string[]`,
+  // so anything that isn't a plain digit string is treated as an invalid id.
+  const id: unknown = req.params.id;
 
-  if (!/^\d+$/.test(id)) {
+  if (typeof id !== "string" || !/^\d+$/.test(id)) {
     res.status(400).json({
       error: { message: "Id de candidato inválido." },
     });
@@ -93,4 +99,6 @@ candidatesRouter.get("/api/candidates/:id", async (req: Request, res: Response) 
   }
 
   res.status(200).json({ data: candidate });
-});
+}
+
+candidatesRouter.get("/api/candidates/:id", getCandidateById);
