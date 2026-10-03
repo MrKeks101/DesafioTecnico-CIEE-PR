@@ -52,3 +52,15 @@ candidatesRouter.post("/api/candidates", async (req: Request, res: Response) => 
     message: "Cadastro salvo com sucesso.",
   });
 });
+
+// GET /api/candidates — full listing for the candidates screen, ordered most
+// recent first. No pagination in the MVP (see "Questões abertas" in
+// docs/requirements/cadastro-de-candidatos.md) — an empty table is a valid
+// 200 response, not an error.
+candidatesRouter.get("/api/candidates", async (_req: Request, res: Response) => {
+  const candidates = await prisma.candidate.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  res.status(200).json({ data: candidates });
+});
