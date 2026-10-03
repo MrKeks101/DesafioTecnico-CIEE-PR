@@ -64,3 +64,33 @@ candidatesRouter.get("/api/candidates", async (_req: Request, res: Response) => 
 
   res.status(200).json({ data: candidates });
 });
+
+// GET /api/candidates/:id — detail screen, full record including `summary`
+// (docs/requirements/cadastro-de-candidatos.md, requisito funcional 7). `id`
+// is validated as an integer before hitting Prisma: a non-numeric id (e.g.
+// "abc") would otherwise reach Prisma as an invalid query argument and
+// surface as a generic 500 via app.ts's error handler, instead of the clear
+// 400 the ticket asks for.
+candidatesRouter.get("/api/candidates/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!/^\d+$/.test(id)) {
+    res.status(400).json({
+      error: { message: "Id de candidato inválido." },
+    });
+    return;
+  }
+
+  const candidate = await prisma.candidate.findUnique({
+    where: { id: Number(id) },
+  });
+
+  if (!candidate) {
+    res.status(404).json({
+      error: { message: "Candidato não encontrado." },
+    });
+    return;
+  }
+
+  res.status(200).json({ data: candidate });
+});
