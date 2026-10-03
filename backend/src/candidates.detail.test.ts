@@ -1,6 +1,8 @@
+import type { Request, Response } from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "./app.js";
+import { getCandidateById } from "./candidates.js";
 import { prisma } from "./db/client.js";
 
 describe("GET /api/candidates/:id", () => {
@@ -52,5 +54,24 @@ describe("GET /api/candidates/:id", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.message).toEqual(expect.any(String));
+  });
+
+  it("returns 400 when the id param arrives as an array, instead of reaching Prisma", async () => {
+    // HTTP path params are always strings, so this calls the handler directly
+    // with the `string[]` shape Express 5 types `req.params.id` as.
+    const req = { params: { id: [String(candidateId), "2"] } } as unknown as Request;
+    const json = vi.fn();
+    const status = vi.fn().mockReturnThis();
+    const res = { status, json } as unknown as Response;
+    const findUnique = vi.spyOn(prisma.candidate, "findUnique");
+
+    await getCandidateById(req, res);
+
+    expect(status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith({
+      error: { message: "Id de candidato inválido." },
+    });
+    expect(findUnique).not.toHaveBeenCalled();
+    findUnique.mockRestore();
   });
 });
