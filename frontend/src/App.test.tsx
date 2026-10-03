@@ -67,14 +67,38 @@ describe("App shell", () => {
   });
 
   it("navigates from the list view to the detail view with the selected candidate's id, and back", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      status: 200,
-      json: async () => ({
-        data: [
-          { id: 42, fullName: "Maria Souza", email: "maria.souza@example.com" },
-        ],
+    // The list (ticket 010) and the detail (ticket 011) hit different
+    // endpoints with different response shapes — route the stub by URL so
+    // each gets the shape it expects.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.endsWith("/api/candidates")) {
+          return Promise.resolve({
+            status: 200,
+            json: async () => ({
+              data: [
+                { id: 42, fullName: "Maria Souza", email: "maria.souza@example.com" },
+              ],
+            }),
+          });
+        }
+
+        return Promise.resolve({
+          status: 200,
+          json: async () => ({
+            data: {
+              id: 42,
+              fullName: "Maria Souza",
+              email: "maria.souza@example.com",
+              phone: null,
+              areaOfInterest: null,
+              summary: "Resumo profissional de teste.",
+            },
+          }),
+        });
       }),
-    }));
+    );
 
     render(<App />);
 
@@ -86,10 +110,12 @@ describe("App shell", () => {
     expect(
       screen.getByRole("heading", { name: "Detalhe do candidato" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/#42/)).toBeInTheDocument();
+    expect(
+      await screen.findByText("Resumo profissional de teste."),
+    ).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Voltar para Candidatos" }),
+      screen.getByRole("button", { name: "Voltar para a listagem" }),
     );
 
     expect(
