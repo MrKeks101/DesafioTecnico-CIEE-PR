@@ -6,7 +6,11 @@ import { prisma } from "./db/client.js";
 describe("GET /api/candidates", () => {
   const createdIds: number[] = [];
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // The dev database is shared with manual testing, so leftover rows from
+    // earlier runs or manual registrations would break the "empty list" case.
+    // Start every test from a known-empty table.
+    await prisma.candidate.deleteMany();
     createdIds.length = 0;
   });
 
