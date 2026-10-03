@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 describe("App shell", () => {
+  afterEach(() => {
+    // Mirrors CandidateForm.test.tsx / CandidateList.test.tsx: undo
+    // vi.stubGlobal("fetch", ...) so one test's mock never leaks into the
+    // next (afterEach(() => cleanup()) in setupTests.ts only unmounts the
+    // DOM, it doesn't touch stubbed globals).
+    vi.unstubAllGlobals();
+  });
+
   it("shows the nav with the expected items", () => {
     render(<App />);
 
@@ -25,7 +33,15 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates from 'Novo cadastro' to 'Candidatos' and back", () => {
+  it("navigates from 'Novo cadastro' to 'Candidatos' and back", async () => {
+    // CandidateList (ticket 010) fetches on mount once the "Candidatos" view
+    // is shown — stub it so this navigation test doesn't make a real network
+    // call. The empty list is irrelevant here; only the heading is asserted.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      status: 200,
+      json: async () => ({ data: [] }),
+    }));
+
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: "Candidatos" }));
@@ -36,6 +52,9 @@ describe("App shell", () => {
     expect(
       screen.queryByRole("heading", { name: "Novo cadastro" }),
     ).not.toBeInTheDocument();
+    expect(
+      await screen.findByText("Nenhum candidato cadastrado ainda."),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Novo cadastro" }));
 
@@ -47,18 +66,27 @@ describe("App shell", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("navigates from the list view to the detail view with the selected id, and back", () => {
+  it("navigates from the list view to the detail view with the selected candidate's id, and back", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      status: 200,
+      json: async () => ({
+        data: [
+          { id: 42, fullName: "Maria Souza", email: "maria.souza@example.com" },
+        ],
+      }),
+    }));
+
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: "Candidatos" }));
     fireEvent.click(
-      screen.getByRole("button", { name: "Ver detalhe de exemplo" }),
+      await screen.findByRole("button", { name: "Ver detalhes" }),
     );
 
     expect(
       screen.getByRole("heading", { name: "Detalhe do candidato" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/#1/)).toBeInTheDocument();
+    expect(screen.getByText(/#42/)).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Voltar para Candidatos" }),
