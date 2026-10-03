@@ -1,6 +1,7 @@
 import cors from "cors";
 import express, { type ErrorRequestHandler, type Request, type Response, type Router } from "express";
 import { candidatesRouter } from "./candidates.js";
+import { candidatesExtractRouter } from "./candidates.extract.js";
 
 /**
  * Builds an Express application instance.
@@ -24,6 +25,9 @@ export function buildApp(extraRouters: Router[] = []) {
     res.status(200).json({ status: "ok" });
   });
 
+  // Extraction is mounted before the candidates router only for readability;
+  // the paths do not overlap (POST /api/candidates/extract vs POST /api/candidates).
+  app.use(candidatesExtractRouter);
   app.use(candidatesRouter);
 
   for (const router of extraRouters) {
