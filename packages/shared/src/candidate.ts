@@ -11,6 +11,14 @@ export const AREA_OF_INTEREST_MAX_LENGTH = 150;
 export const SUMMARY_MAX_LENGTH = 5000;
 
 /**
+ * A person's full name: letters (any language/script, including accented
+ * Portuguese characters like á, é, í, ó, ú, â, ê, ô, ã, õ, ç), whitespace,
+ * hyphens (double-barreled names) and apostrophes (e.g. "O'Brien"). Digits
+ * and other symbols are rejected — see ticket 017.
+ */
+export const FULL_NAME_PATTERN = /^[\p{L}\s'-]+$/u;
+
+/**
  * Single source of truth for candidate validation, shared by the manual
  * registration form and the PDF-import flow (both frontend and backend) —
  * see PROJECT.md decision "Validação com Zod em schema compartilhado".
@@ -28,7 +36,8 @@ export const candidateSchema = z.object({
     .max(
       FULL_NAME_MAX_LENGTH,
       `Nome completo deve ter no máximo ${FULL_NAME_MAX_LENGTH} caracteres.`,
-    ),
+    )
+    .regex(FULL_NAME_PATTERN, "Nome completo não pode conter números."),
   email: z
     .string("E-mail é obrigatório.")
     .trim()

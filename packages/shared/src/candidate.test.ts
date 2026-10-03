@@ -147,6 +147,66 @@ describe("candidateSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a fullName with accented letters", () => {
+    const result = candidateSchema.safeParse({
+      fullName: "João da Silva",
+      email: "candidata@example.com",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a fullName with a hyphen and an apostrophe", () => {
+    const result = candidateSchema.safeParse({
+      fullName: "Maria José O'Brien-Santos",
+      email: "candidata@example.com",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a fullName containing digits", () => {
+    const result = candidateSchema.safeParse({
+      fullName: "João 123",
+      email: "candidata@example.com",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fullNameIssue = result.error.issues.find((issue) => issue.path[0] === "fullName");
+      expect(fullNameIssue).toBeDefined();
+      expect(fullNameIssue?.message).toMatch(/não pode conter números/i);
+    }
+  });
+
+  it("rejects a fullName made only of digits", () => {
+    const result = candidateSchema.safeParse({
+      fullName: "123456",
+      email: "candidata@example.com",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fullNameIssue = result.error.issues.find((issue) => issue.path[0] === "fullName");
+      expect(fullNameIssue).toBeDefined();
+      expect(fullNameIssue?.message).toMatch(/não pode conter números/i);
+    }
+  });
+
+  it("rejects a fullName containing other symbols, like an underscore", () => {
+    const result = candidateSchema.safeParse({
+      fullName: "Maria_Silva",
+      email: "candidata@example.com",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fullNameIssue = result.error.issues.find((issue) => issue.path[0] === "fullName");
+      expect(fullNameIssue).toBeDefined();
+      expect(fullNameIssue?.message).toMatch(/não pode conter números/i);
+    }
+  });
+
   it("does not enforce a phone format — unusual but valid-looking phone text is accepted", () => {
     const result = candidateSchema.safeParse({
       fullName: "Maria da Silva",
