@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { app } from "./app.js";
-import { getCandidateById } from "./candidates.js";
-import { prisma } from "./db/client.js";
+import { app } from "../src/app.js";
+import { getCandidateById } from "../src/candidates.js";
+import { prisma } from "../src/db/client.js";
 
 describe("GET /api/candidates/:id", () => {
   let candidateId: number;

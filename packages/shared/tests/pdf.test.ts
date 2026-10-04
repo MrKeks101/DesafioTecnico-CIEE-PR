@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALLOWED_PDF_MIME_TYPES, MAX_PDF_SIZE_BYTES } from "./pdf.js";
+import { ALLOWED_PDF_MIME_TYPES, MAX_PDF_SIZE_BYTES } from "../src/pdf.js";
 
 describe("PDF upload constraints", () => {
   it("limits uploads to 5 MB", () => {

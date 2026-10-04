@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MAX_PDF_SIZE_BYTES } from "shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CandidateForm } from "./CandidateForm";
+import { CandidateForm } from "../src/CandidateForm";
 
 const EXTRACT_URL = "http://localhost:3001/api/candidates/extract";
 const CREATE_URL = "http://localhost:3001/api/candidates";

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
-import { app, buildApp } from "./app.js";
+import { app, buildApp } from "../src/app.js";
 
 describe("GET /api/health", () => {
   it("responds 200 with { status: 'ok' }", async () => {

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CandidateDetail } from "./CandidateDetail";
+import { CandidateDetail } from "../src/CandidateDetail";
 
 const SAMPLE_CANDIDATE = {
   id: 7,
