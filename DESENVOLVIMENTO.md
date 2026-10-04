@@ -147,7 +147,7 @@ Verificação em camadas:
 
 ## 7. Tempo aproximado dedicado
 
-[PREENCHER: horas aproximadas dedicadas ao desafio, de 01/10 a 04/10.]
+Aproximadamente 6 horas, do dia 01 ao dia 03.
 
 ## 8. Dificuldades, limitações e melhorias
 
