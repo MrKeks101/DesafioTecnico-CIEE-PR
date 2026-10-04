@@ -1,5 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { candidateSchema } from "shared";
+import {
+  ALLOWED_PDF_MIME_TYPES,
+  MAX_PDF_SIZE_BYTES,
+  candidateSchema,
+} from "shared";
 
 // Mirrors packages/shared's CandidateInput, but as plain strings for every
 // field (including the optional ones) so controlled <input>/<textarea>
@@ -29,6 +33,55 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 type FieldErrors = Partial<Record<keyof CandidateFormValues, string>>;
 
+// Messages for the PDF upload (ticket 014). The size is derived from the
+// shared constant so "5 MB" is not written out by hand in a second place.
+const MAX_PDF_SIZE_MB = MAX_PDF_SIZE_BYTES / (1024 * 1024);
+const PDF_TYPE_MESSAGE = "Arquivo inválido: envie um arquivo PDF.";
+const PDF_SIZE_MESSAGE = `Arquivo muito grande: o PDF deve ter no máximo ${MAX_PDF_SIZE_MB} MB.`;
+const PDF_NETWORK_MESSAGE =
+  "Não foi possível conectar ao servidor para ler o currículo. Preencha os campos manualmente.";
+const PDF_GENERIC_MESSAGE =
+  "Não foi possível ler o currículo. Preencha os campos manualmente.";
+
+// Fields the extraction endpoint can return (ticket 013). Anything else in
+// the response is ignored.
+const EXTRACTABLE_FIELDS = ["fullName", "email", "phone"] as const;
+type ExtractableField = (typeof EXTRACTABLE_FIELDS)[number];
+
+type ExtractResponseBody = {
+  data?: Partial<Record<ExtractableField, unknown>>;
+  warning?: string;
+  error?: { message?: string };
+};
+
+// Client-side check run before any network call. The backend applies the same
+// rules (multer), so a file that gets past this is still re-validated there.
+function validatePdfFile(file: File): string | null {
+  if (!(ALLOWED_PDF_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return PDF_TYPE_MESSAGE;
+  }
+  if (file.size > MAX_PDF_SIZE_BYTES) {
+    return PDF_SIZE_MESSAGE;
+  }
+  return null;
+}
+
+// Keeps only the extracted fields that carry a non-empty string, so missing
+// or blank values never overwrite what the person has already typed.
+function pickExtractedFields(
+  data: ExtractResponseBody["data"],
+): Partial<Pick<CandidateFormValues, ExtractableField>> {
+  const picked: Partial<Pick<CandidateFormValues, ExtractableField>> = {};
+  if (!data) return picked;
+  for (const field of EXTRACTABLE_FIELDS) {
+    const value = data[field];
+    if (typeof value === "string" && value.trim() !== "") {
+      picked[field] = value;
+    }
+  }
+  return picked;
+}
+
 export type CandidateFormProps = {
   // Pre-fills the controlled fields from external state. This is the hook
   // ticket 014 (upload de PDF) will use to populate fullName/email/phone
@@ -51,11 +104,75 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReadingPdf, setIsReadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfWarning, setPdfWarning] = useState<string | null>(null);
 
   function handleChange(field: keyof CandidateFormValues) {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setValues((previous) => ({ ...previous, [field]: event.target.value }));
     };
+  }
+
+  // The PDF only pre-fills the form. It never saves anything: the person
+  // still submits the form, which goes through POST /api/candidates like the
+  // manual path. Any failure here is reported next to the upload field and
+  // leaves the rest of the form untouched (specs.md: PDF is optional).
+  async function handlePdfChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    setPdfError(null);
+    setPdfWarning(null);
+
+    const problem = validatePdfFile(file);
+    if (problem) {
+      setPdfError(problem);
+      input.value = "";
+      return;
+    }
+
+    setIsReadingPdf(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+
+      // No explicit Content-Type: the browser must set the multipart boundary.
+      const response = await fetch(`${API_BASE_URL}/api/candidates/extract`, {
+        method: "POST",
+        body,
+      });
+      const payload: ExtractResponseBody | null = await response
+        .json()
+        .catch(() => null);
+
+      if (response.status !== 200) {
+        setPdfError(payload?.error?.message ?? PDF_GENERIC_MESSAGE);
+        return;
+      }
+
+      const extracted = pickExtractedFields(payload?.data);
+      if (Object.keys(extracted).length > 0) {
+        setValues((previous) => ({ ...previous, ...extracted }));
+        setErrors((previous) => {
+          const next = { ...previous };
+          for (const field of Object.keys(extracted) as ExtractableField[]) {
+            delete next[field];
+          }
+          return next;
+        });
+      }
+      if (payload?.warning) {
+        setPdfWarning(payload.warning);
+      }
+    } catch {
+      setPdfError(PDF_NETWORK_MESSAGE);
+    } finally {
+      setIsReadingPdf(false);
+      // Clearing the input lets the same file be picked again to retry.
+      input.value = "";
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -117,6 +234,21 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
 
   return (
     <form onSubmit={handleSubmit} noValidate>
+      <div>
+        <label htmlFor="pdfFile">Importar currículo em PDF (opcional)</label>
+        <input
+          id="pdfFile"
+          name="pdfFile"
+          type="file"
+          accept="application/pdf"
+          onChange={handlePdfChange}
+          disabled={isReadingPdf}
+        />
+        {isReadingPdf && <p role="status">Lendo currículo...</p>}
+        {pdfError && <p role="alert">{pdfError}</p>}
+        {pdfWarning && <p role="status">{pdfWarning}</p>}
+      </div>
+
       <div>
         <label htmlFor="fullName">Nome completo *</label>
         <input
