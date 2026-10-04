@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PdfReadError, extractTextFromPdf } from "./extractTextFromPdf.js";
+import { PdfReadError, extractTextFromPdf } from "../../src/pdf/extractTextFromPdf.js";
 
 /**
  * Builds a tiny but structurally valid single-page PDF with one line of text,

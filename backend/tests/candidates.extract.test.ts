@@ -4,18 +4,18 @@ import { fileURLToPath } from "node:url";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_PDF_SIZE_BYTES } from "shared";
-import { app } from "./app.js";
-import { prisma } from "./db/client.js";
-import { extractTextFromPdf } from "./pdf/extractTextFromPdf.js";
+import { app } from "../src/app.js";
+import { prisma } from "../src/db/client.js";
+import { extractTextFromPdf } from "../src/pdf/extractTextFromPdf.js";
 
 // Wrap the real extractor in a spy so tests can assert whether a file was
 // processed at all (e.g. an oversized upload must be rejected before parsing).
-vi.mock("./pdf/extractTextFromPdf.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./pdf/extractTextFromPdf.js")>();
+vi.mock("../src/pdf/extractTextFromPdf.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/pdf/extractTextFromPdf.js")>();
   return { ...actual, extractTextFromPdf: vi.fn(actual.extractTextFromPdf) };
 });
 
-const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), "pdf", "__fixtures__");
+const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const fixture = (name: string) => readFileSync(join(FIXTURES_DIR, name));
 
 const VALID_PDF = fixture("curriculo-ficticio-valido.pdf");

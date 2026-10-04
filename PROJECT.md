@@ -40,9 +40,15 @@ PROJECT.md           este arquivo — workflow & acordo de trabalho
 specs.md             enunciado original do desafio (referência, não editar)
 docker-compose.yml   SQL Server local para dev/avaliação
 package.json         raiz do npm workspaces
-frontend/            app React (TypeScript)
-backend/             API Express (TypeScript)
-packages/shared/     schemas Zod compartilhados por frontend e backend
+frontend/
+  src/               código-fonte do app React (TypeScript)
+  tests/             testes Vitest + RTL, espelhando src/
+backend/
+  src/               código-fonte da API Express (TypeScript)
+  tests/             testes Vitest + supertest, espelhando src/ (+ fixtures/ de PDF)
+packages/shared/
+  src/               schemas Zod compartilhados por frontend e backend
+  tests/             testes dos schemas
 prisma/              schema.prisma + migrations do SQL Server
 docs/
   requirements/      análise de domínio e requisitos por feature (PM)
@@ -221,3 +227,7 @@ a base do `DESENVOLVIMENTO.md` final.
   `npx prisma generate` (o client do Prisma precisa ser regenerado depois de
   qualquer reinstalação limpa). Se o avaliador bater nisso, esse é o passo a
   seguir.
+- **Observação para a explicação final (não verificada):** o problema acima
+  é específico de Windows. Em Linux, que é o ambiente típico de servidores
+  web, o mais provável é que não ocorra, já que o npm não depende do mesmo
+  fluxo de instalação de binários nativos opcionais. Não testamos isso aqui.

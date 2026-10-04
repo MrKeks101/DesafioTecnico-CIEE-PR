@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SUMMARY_MAX_LENGTH } from "shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CandidateForm } from "./CandidateForm";
+import { CandidateForm } from "../src/CandidateForm";
 
 function fillRequiredFields(fullName = "Maria Souza", email = "maria.souza@example.com") {
   fireEvent.change(screen.getByLabelText(/Nome completo/i), {

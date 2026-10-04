@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FULL_NAME_MAX_LENGTH } from "shared";
-import { extractCandidateFields } from "./extractCandidateFields.js";
+import { extractCandidateFields } from "../../src/pdf/extractCandidateFields.js";
 
 const WELL_BEHAVED_RESUME = `Maria Souza da Silva
 Desenvolvedora de Software

@@ -6,7 +6,7 @@ import {
   PHONE_MAX_LENGTH,
   SUMMARY_MAX_LENGTH,
   candidateSchema,
-} from "./candidate.js";
+} from "../src/candidate.js";
 
 describe("candidateSchema", () => {
   it("rejects a payload without fullName", () => {
